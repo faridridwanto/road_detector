@@ -3,6 +3,7 @@
 Created on Fri Feb 03 06:23:54 2017
 
 @author: Farid
+This one cantains code for saving the result as precision-recall list (for further visualization on graph).
 """
 
 import pickle

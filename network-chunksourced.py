@@ -3,42 +3,13 @@
 Created on Thu Dec 01 18:29:26 2016
 
 @author: Farid
-"""
 
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 30 08:31:03 2016
-
-@author: Farid
-"""
-
-"""network3.py
-~~~~~~~~~~~~~~
-
-A Theano-based program for training and running simple neural
-networks.
-
-Supports several layer types (fully connected, convolutional, max
-pooling, softmax), and activation functions (sigmoid, tanh, and
-rectified linear units, with more easily added).
-
-When run on a CPU, this program is much faster than network.py and
-network2.py.  However, unlike network.py and network2.py it can also
-be run on a GPU, which makes it faster still.
-
-Because the code is based on Theano, the code is different in many
-ways from network.py and network2.py.  However, where possible I have
-tried to maintain consistency with the earlier programs.  In
-particular, the API is similar to network2.py.  Note that I have
-focused on making the code simple, easily readable, and easily
-modifiable.  It is not optimized, and omits many desirable features.
-
-This program incorporates ideas from the Theano documentation on
-convolutional neural nets (notably,
-http://deeplearning.net/tutorial/lenet.html ), from Misha Denil's
-implementation of dropout (https://github.com/mdenil/dropout ), and
-from Chris Olah (http://colah.github.io ).
-
+This file contains main parts of the model: The Class of Neural Network and
+The Class of The Layers. The core of the codes were heavily taken from Nielsen's
+Code for CNN Tutorial http://neuralnetworksanddeeplearning.com/chap6.html#the_code_for_our_convolutional_networks
+and I modified it to comply with architecture and input-output of my research project.
+The architecture of the neural network was very much the same as Mnih (2013) https://www.cs.toronto.edu/~vmnih/docs/Mnih_Volodymyr_PhD_Thesis.pdf
+but in the process I used some methods that were not written in the thesis.
 """
 
 #### Libraries
@@ -77,14 +48,10 @@ import random
 #THEANO_FLAGS='exception_verbosity=high'
 GPU = True
 if GPU:
-    print "Trying to run under a GPU.  If this is not desired, then modify "+\
-        "network3.py\nto set the GPU flag to False."
-    try: theano.config.device = 'gpu'
-    except: pass # it's already set
+    print "Trying to run under a GPU."
     theano.config.floatX = 'float32'
 else:
-    print "Running with a CPU.  If this is not desired, then the modify "+\
-        "network3.py to set\nthe GPU flag to True."
+    print "Running with a CPU."
 def shareddat(data):
         """Place the data into shared variables.  This allows Theano to copy
         the data to the GPU, if one is available.
@@ -95,7 +62,7 @@ def shareddat(data):
         shared_y = theano.shared(
             np.asarray(data[1], dtype=theano.config.floatX), borrow=True)
         return shared_x, T.cast(shared_y, 'float32')
-array_of_cost = []
+array_of_cost = [] #list for monitoring the cost in every batch
 #### Main class used to construct and train networks
 class Network(object):
 
@@ -123,6 +90,10 @@ class Network(object):
                 prev_layer.output, prev_layer.output_dropout, self.mini_batch_size)
         self.output = self.layers[-1].output
         self.output_dropout = self.layers[-1].output_dropout
+        
+        """
+        Code for ADADELTA method, taken from Python library 'lasagne'
+        """
     def updateADADELTA(self,grads, params, eta=1.0, rho=0.95, epsilon=1e-6):
         updates = OrderedDict()
         one = T.constant(1)
@@ -252,7 +223,7 @@ class Network(object):
         # Do the actual training
         array_of_cost = []
         i = T.lscalar()
-        filename = 'trainingdatagrayhisteqed'
+        filename = 'chunk2700-1'
         the_data = load_file(filename)
         the_data = shareddat(the_data)
         training_x,training_y = the_data
@@ -266,6 +237,11 @@ class Network(object):
                 training_y[i*self.mini_batch_size: (i+1)*self.mini_batch_size]
                     })
         for epoch in xrange(epochs):
+            """
+            Code for weighting the cost. Because of class-imbalance problem, 
+            I tried to make the cost for every class different to 'balance'
+            the proportion.
+            """
 #            if epoch<60:
 #                self.wa = 9.0
 #            else:
@@ -544,36 +520,36 @@ def write_something(the_text,filename='tulisan.txt'):
     f.close()
 
 start = time.clock()
-#net = Network([ConvPoolLayer(image_shape=(135,1, 64, 64),
-#                             filter_shape=(64, 1, 16, 16), 
-#                             poolsize=(2, 2),
-#                             stride=(4,4), activation_fn=ReLU), 
-#               ConvPoolLayer(image_shape=(135, 64, 6, 6), 
-#                             filter_shape=(112, 64, 4, 4), 
-#                             poolsize=(1, 1), activation_fn=ReLU), 
-#               ConvPoolLayer(image_shape=(135, 112, 3, 3), 
-#                             filter_shape=(80, 112, 3, 3), 
-#                             poolsize=(1, 1), activation_fn=ReLU), 
-#               FullyConnectedLayer(n_in=80*1*1, n_out=4096,activation_fn=ReLU), 
-#               FullyConnectedLayer(n_in=4096, n_out=256,p_dropout=0.5)], 135)
+net = Network([ConvPoolLayer(image_shape=(135,3, 64, 64),
+                             filter_shape=(64, 3, 16, 16), 
+                             poolsize=(2, 2),
+                             stride=(4,4), activation_fn=ReLU), 
+               ConvPoolLayer(image_shape=(135, 64, 6, 6), 
+                             filter_shape=(112, 64, 4, 4), 
+                             poolsize=(1, 1), activation_fn=ReLU), 
+               ConvPoolLayer(image_shape=(135, 112, 3, 3), 
+                             filter_shape=(80, 112, 3, 3), 
+                             poolsize=(1, 1), activation_fn=ReLU), 
+               FullyConnectedLayer(n_in=80*1*1, n_out=4096,activation_fn=ReLU), 
+               FullyConnectedLayer(n_in=4096, n_out=256,p_dropout=0.5)], 135)
 #net = Network([FullyConnectedLayer(n_in=3*64*64, n_out=8192,activation_fn=ReLU),
 #               FullyConnectedLayer(n_in=8192, n_out=16)],100)
 #net = Network([ConvPoolLayer(image_shape=(111,3, 64, 64), filter_shape=(64, 3, 12, 12), poolsize=(3, 3), activation_fn=ReLU), FullyConnectedLayer(n_in=64*17*17, n_out=256)], 111)
 #
 #net.y = T.fmatrix('y')
 #print net.y.dtype
-net = load_file(filename='BaruCobaHistoEqPadaTrainingSet3-285')
-#net.train_SGD(40,255, 135,  0.005, lmbda=0.0002)
-#save_net(net,filename='BaruCobaHistoEqPadaTrainingSet3-285')
-the_data = load_file(filename='testdatagrayhisteqed')
-the_data = shareddat(the_data)
-#net.test_net(the_data)
-f = open('urutangambar','rb')
-array_of_valp = cPickle.load(f)
-f.close()
-array_of_valp = array_of_valp[0:2700]
-#print net.mini_batch_size
-net.predict(the_data,array_of_valp)
+#net = load_file(filename='BaruCobaHistoEqPadaTrainingSet3-285')
+net.train_SGD(40,255, 135,  0.005, lmbda=0.0002)
+save_net(net,filename='try-on-neated')
+#the_data = load_file(filename='testdatagrayhisteqed')
+#the_data = shareddat(the_data)
+##net.test_net(the_data)
+#f = open('urutangambar','rb')
+#array_of_valp = cPickle.load(f)
+#f.close()
+#array_of_valp = array_of_valp[0:2700]
+##print net.mini_batch_size
+#net.predict(the_data,array_of_valp)
 #urutan = T.arange(1,8000000).eval()
 #random.shuffle(urutan)
 #save_net(urutan,filename='urutanacak')
@@ -588,10 +564,5 @@ print 'overall time='+str(end)+'seconds'
 #print dataynya
 #str1 = ''.join(str(e) for e in img)
 #print str1
-
-
-#diganti patchnya (bandingkan 16, 8, dan 4)
-#diganti output 3x3
-#diganti cost-functionnya
 
 

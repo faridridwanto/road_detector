@@ -3,6 +3,8 @@
 Created on Sun Sep 18 17:07:58 2016
 
 @author: Farid
+This code was created to make a list of order to take the images as the input
+(result of this code will then be used in 'chunk-making.py').
 """
 
 #### Libraries

@@ -3,6 +3,8 @@
 Created on Thu Dec 01 16:48:00 2016
 
 @author: Farid
+
+This file contains code for 'chunking datasets': creating smaller dataset from larger one.
 """
 
 import time
@@ -28,6 +30,9 @@ def ReLU(z): return T.maximum(0.0, z)
 from theano.tensor.nnet import sigmoid
 #from theano.tensor import tanh
 import random
+"""
+This code is to apply histogram equalization to the original images.
+"""
 def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
 def image_histogram_equalization(image, number_bins=256):
@@ -41,6 +46,9 @@ def image_histogram_equalization(image, number_bins=256):
     # use linear interpolation of cdf to find new pixel values
     image_equalized = np.interp(image.flatten(), bins[:-1], cdf)
     return image_equalized.reshape(image.shape)
+    """
+    This one is for the real 'chunking' part.
+    """
 #f = open('urutangambar','rb')
 #array_of_pointers = cPickle.load(f)
 #f.close()

@@ -3,6 +3,8 @@
 Created on Sun Nov 13 10:49:51 2016
 
 @author: Farid
+In my research, I also tried to do filtering on the output to get better results.
+This code is for applying the filter (using median filter).
 """
 
 import scipy
@@ -10,6 +12,7 @@ import numpy as np
 from scipy import misc
 from scipy import signal
 from theano import tensor as T
+
 thebest = 0
 bestp = 0.0
 for i in xrange(100):  
